@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_libsodium/libsodium_wrapper.dart';
 
 class FlutterLibsodium {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_libsodium');
+  final wrapper = LibsodiumWrapper();
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
+  String getSodiumVersion() {
+    return wrapper.sodiumVersionString();
   }
 }
