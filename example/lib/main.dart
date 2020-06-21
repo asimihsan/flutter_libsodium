@@ -15,8 +15,11 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final wrapper = LibsodiumWrapper();
+  final String serverPublicKeyBase64Encoded = "lKSTP8K5YQoHMZOn2+mTLunP3yMgqN1O8GyaqRvHbQE=";
+  final plaintextController = TextEditingController();
 
   String _sodiumVersion = 'Unknown Sodium Version';
+  String _encryptedData = '';
 
   @override
   void initState() {
@@ -24,10 +27,24 @@ class _MyAppState extends State<MyApp> {
     getSodiumVersion();
   }
 
+  @override
+  void dispose() {
+    plaintextController.dispose();
+    super.dispose();
+  }
+
   Future<void> getSodiumVersion() async {
     final sodiumVersion = await compute(getSodiumVersionString, wrapper);
     setState(() {
       _sodiumVersion = sodiumVersion;
+    });
+  }
+
+  Future<void> encryptData(final String plaintext) async {
+    final encryptedData = await compute(
+        cryptoBoxSeal, CryptoBoxSealCall(wrapper, serverPublicKeyBase64Encoded, plaintext));
+    setState(() {
+      _encryptedData = encryptedData;
     });
   }
 
@@ -39,7 +56,35 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Using libsodium: $_sodiumVersion', key: Key('version')),
+          child: Column(
+            children: [
+              Text('Using libsodium: $_sodiumVersion', key: Key('version')),
+              TextField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Text to encrypt',
+                ),
+                key: Key('plaintextTextField'),
+                controller: plaintextController,
+              ),
+              SelectableText('Encrypted data: $_encryptedData', key: Key('encryptedData')),
+              FlatButton(
+                color: Colors.blue,
+                textColor: Colors.white,
+                disabledColor: Colors.grey,
+                disabledTextColor: Colors.black,
+                padding: EdgeInsets.all(8.0),
+                splashColor: Colors.blueAccent,
+                onPressed: () async {
+                  encryptData(plaintextController.text);
+                },
+                child: Text(
+                  "Encrypt",
+                  style: TextStyle(fontSize: 20.0),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
